@@ -117,6 +117,16 @@ Search for layered laundering chains (A → B → C → D with amount decay and 
 ### Milestone 5 — Scale + Demo
 Reimplement feature engineering in PySpark + GraphFrames for larger dataset sizes, and build a Streamlit dashboard to search accounts, view their subgraph, and inspect their fraud score and explanation.
 
+### Milestone 6 — Distributed Big Data, Streaming & NoSQL Architecture
+Deliver an enterprise-grade distributed AML big data platform:
+- Low-level **Spark RDD** transformations (map, flatMap, filter, reduceByKey, sortByKey) and actions (take, count, saveAsTextFile).
+- Multi-source **ETL pipeline** integrating transaction ledgers, OFAC sanctions lists, and FATF country risk ratings with 5 deterministic data quality rules and automated audit reporting.
+- **Wide-column NoSQL schema** design in Cassandra CQL (transaction_events, account_profiles, streaming_alerts, model_predictions) and Delta Lake implementation with dynamic schema evolution and ACID upserts.
+- **Spark SQL** structured analytics with temp views, window functions (LAG()), and rule-based risk scoring.
+- Distributed classification pipelines using **PySpark MLlib** (GBTClassifier, RandomForestClassifier, LogisticRegression) evaluated on PR-AUC.
+- Real-time **Structured Streaming** with event-time watermarking, 5-minute tumbling windows, anomaly rules, and dual console/parquet sinks.
+- Complete suite of 7 **Databricks Community Edition** notebooks (notebooks/06a to 06g_end_to_end_demo.ipynb).
+
 ---
 
 ## Results
@@ -145,4 +155,4 @@ Reimplement feature engineering in PySpark + GraphFrames for larger dataset size
 
 ## Tech Stack
 
-`Python` · `pandas` · `networkx` · `scikit-learn` · `XGBoost` · `PyTorch Geometric` (GraphSAGE, GNNExplainer) · `PySpark` / `GraphFrames` · `Streamlit`
+`Python` · `pandas` · `networkx` · `scikit-learn` · `XGBoost` · `PyTorch Geometric` (GraphSAGE, GNNExplainer) · `PySpark` (RDD, SQL, MLlib, Structured Streaming) · `Delta Lake` / `Cassandra CQL` · `Streamlit` · `FastAPI`

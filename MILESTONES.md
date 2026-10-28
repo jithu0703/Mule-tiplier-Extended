@@ -1,6 +1,6 @@
 # Chain Reaction — Money Mule Detection with Graph Neural Networks
 
-A graph-based fraud detection project that models bank transactions as a graph to identify money mule accounts, using GraphSAGE for learned structural patterns, motif search for multi-hop laundering chains, and GNNExplainer for interpretable fraud flags.
+A graph-based fraud detection project that models bank transactions as a graph to identify money mule accounts, using GraphSAGE for learned structural patterns, motif search for multi-hop laundering chains, GNNExplainer for interpretable fraud flags, and Apache Spark / NoSQL for distributed big data processing.
 
 ---
 
@@ -93,3 +93,26 @@ A graph-based fraud detection project that models bank transactions as a graph t
 **Done when:** You have a live, clickable demo and a README documenting the full pipeline, results, and honest limitations.
 
 ---
+
+## Milestone 6: Distributed Big Data & Streaming Architecture (Spark, MLlib, Streaming & NoSQL)
+
+**Goal:** Deliver an enterprise-grade distributed AML big data platform demonstrating Spark RDD, Spark SQL, Spark MLlib, Structured Streaming, and a Wide-Column NoSQL data model designed for Databricks micro-clusters.
+
+**Concepts required:**
+- Spark RDD core transformations (`map`, `flatMap`, `filter`, `reduceByKey`, `sortByKey`) and actions (`count`, `take`, `first`, `saveAsTextFile`)
+- Spark SQL Temp Views, windowed aggregation (`LAG()`, `LEAD()`), and ANSI SQL rule-based risk classification
+- Distributed classification pipelines with `pyspark.ml` (`GBTClassifier`, `RandomForestClassifier`, `LogisticRegression`) tuned for severe class imbalance using PR-AUC
+- Real-time Structured Streaming with event-time watermarking, 5-minute tumbling windows, and anomaly filtering
+- Wide-column NoSQL schema architecture (Cassandra CQL & Delta Lake) with dynamic schema evolution, ACID upserts, and time-travel audit trails
+- Multi-source ETL pipelines with automated validation (5 deterministic rules), deduplication, sanctions screening, and referential integrity verification
+
+**What gets built:**
+- `src/spark_rdd_pipeline.py`: Low-level RDD transformation and feature extraction pipeline
+- `src/spark_sql_analytics.py`: Advanced ANSI Spark SQL queries and windowed temporal analytics
+- `src/spark_ml_pipeline.py`: Distributed MLlib classification suite with unified benchmark tables
+- `src/stream_simulator.py` & `src/streaming_pipeline.py`: Continuous micro-batch stream simulator and Structured Streaming engine
+- `src/wide_column_model.py` & `docs/cassandra_schema.cql`: NoSQL Cassandra schema specification and Delta Lake wide-row implementation
+- `src/etl_pipeline.py`, `data/external/sanctions_list.csv`, `data/external/country_risk_scores.csv`: Multi-source ETL orchestrator with automated data quality audits
+- Complete Databricks notebook execution flow: `notebooks/06a_spark_rdd_fundamentals.ipynb` through `06g_end_to_end_demo.ipynb`
+
+**Done when:** All six sub-phases (6A–6F) and the capstone end-to-end integration demo run seamlessly with complete requirements traceability.
