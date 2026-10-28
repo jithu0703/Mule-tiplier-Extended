@@ -1,0 +1,52 @@
+country_code,country_name,fatf_risk_level,corruption_perception_index,aml_risk_score
+US,United States,LOW,69,0.22
+GB,United Kingdom,LOW,71,0.20
+DE,Germany,LOW,78,0.18
+FR,France,LOW,71,0.21
+JP,Japan,LOW,73,0.17
+CA,Canada,LOW,74,0.19
+AU,Australia,LOW,75,0.18
+CH,Switzerland,LOW,82,0.15
+SG,Singapore,LOW,83,0.16
+NL,Netherlands,LOW,79,0.17
+SE,Sweden,LOW,82,0.14
+NO,Norway,LOW,84,0.13
+DK,Denmark,LOW,90,0.11
+NZ,New Zealand,LOW,85,0.12
+FI,Finland,LOW,87,0.12
+IT,Italy,MEDIUM,56,0.38
+ES,Spain,MEDIUM,60,0.34
+KR,South Korea,LOW,63,0.28
+AE,United Arab Emirates,MEDIUM,68,0.45
+SA,Saudi Arabia,MEDIUM,52,0.42
+IL,Israel,LOW,62,0.31
+BR,Brazil,MEDIUM,36,0.58
+MX,Mexico,MEDIUM,31,0.64
+IN,India,MEDIUM,39,0.52
+CN,China,MEDIUM,42,0.49
+ZA,South Africa,HIGH,41,0.66
+TR,Turkey,HIGH,34,0.70
+RU,Russian Federation,VERY_HIGH,26,0.88
+NG,Nigeria,HIGH,25,0.78
+PK,Pakistan,HIGH,29,0.75
+PH,Philippines,HIGH,34,0.69
+VN,Vietnam,HIGH,41,0.67
+ID,Indonesia,MEDIUM,34,0.57
+TH,Thailand,MEDIUM,35,0.55
+EG,Egypt,HIGH,35,0.68
+KE,Kenya,HIGH,31,0.72
+CO,Colombia,MEDIUM,40,0.60
+PA,Panama,HIGH,35,0.74
+KY,Cayman Islands,MEDIUM,65,0.48
+VG,British Virgin Islands,MEDIUM,60,0.52
+CY,Cyprus,MEDIUM,53,0.44
+MT,Malta,MEDIUM,51,0.46
+BS,Bahamas,MEDIUM,64,0.45
+IR,Iran,VERY_HIGH,24,0.95
+KP,North Korea,VERY_HIGH,12,0.99
+SY,Syrian Arab Republic,VERY_HIGH,13,0.96
+MM,Myanmar,VERY_HIGH,20,0.91
+VE,Venezuela,VERY_HIGH,14,0.94
+CU,Cuba,HIGH,42,0.80
+AF,Afghanistan,VERY_HIGH,20,0.92
+

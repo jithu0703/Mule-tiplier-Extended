@@ -1,4 +1,6 @@
-/data
+/data/*
+!/data/external/
+/data/stream/
 /outputs
 /chain-reaction-env
 *.pyc

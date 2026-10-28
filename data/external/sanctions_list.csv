@@ -1,0 +1,190 @@
+entity_id,entity_name,sanctions_list,country_code,risk_score
+8000EBD30,Oceanic Trade Holdings Ltd,OFAC-SDN,IR,0.95
+8000F4580,Golden Crescent Finance Corp,UN-SC,SY,0.88
+8000F5340,Al-Rashid Investment Group,FATF-BLACKLIST,AF,0.92
+80021B160,Dragon Pearl Enterprises,EU-AML,KP,0.97
+8002C75E0,Caspian Energy Partners LLC,OFAC-SDN,RU,0.85
+80035D110,Sahara Logistics International,UN-SC,LY,0.79
+80040E220,Blue Horizon Shipping Co,FATF-BLACKLIST,MM,0.91
+8004A9330,Emerald Valley Trading FZE,OFAC-SDN,IQ,0.83
+80052C440,Phoenix Global Consulting Ltd,EU-AML,VE,0.77
+80061D550,Nova Star Financial Services,UN-SC,SD,0.86
+8006AE660,Crescent Moon Holdings BV,OFAC-SDN,CU,0.94
+80073F770,Atlas Capital Management SA,FATF-BLACKLIST,PK,0.72
+80082A880,Orion Strategic Partners Ltd,EU-AML,BY,0.81
+80091B990,Pinnacle Investment Trust,OFAC-SDN,LB,0.88
+8009FCAA0,Zenith Commodity Traders LLC,UN-SC,YE,0.90
+9001A0100,Volga Resource Holdings,OFAC-SDN,RU,0.93
+9001B1210,Euphrates Development Corp,UN-SC,SY,0.87
+9001C2320,Ankara Shield Enterprises,EU-AML,TR,0.65
+9001D3430,Pyongyang Trade Bureau,FATF-BLACKLIST,KP,0.99
+9001E4540,Caracas Petroleum Ventures,OFAC-SDN,VE,0.82
+9001F5650,Mogadishu Maritime Services,UN-SC,SO,0.91
+9002A6760,Khartoum Industrial Complex,FATF-BLACKLIST,SD,0.88
+9002B7870,Havana Import Export Ltd,OFAC-SDN,CU,0.86
+9002C8980,Tehran Machinery Co,EU-AML,IR,0.94
+9002D9A90,Minsk Technology Group,UN-SC,BY,0.78
+9003AAB00,Damascus Trading House,FATF-BLACKLIST,SY,0.96
+9003BBC10,Donetsk Steel Works LLC,OFAC-SDN,UA,0.73
+9003CCD20,Kabul Construction Partners,UN-SC,AF,0.85
+9003DDE30,Rangoon Jade Mining Corp,EU-AML,MM,0.89
+9003EEF40,Tripoli Oil Services Ltd,FATF-BLACKLIST,LY,0.81
+9004FF050,Baghdad Central Exchange,OFAC-SDN,IQ,0.77
+9004A1160,Sanaa Grain Trading Co,UN-SC,YE,0.92
+9004B2270,Conakry Mining Exports,EU-AML,GN,0.74
+9004C3380,Bangui Diamond Exchange,FATF-BLACKLIST,CF,0.95
+9004D4490,Juba River Transport LLC,OFAC-SDN,SS,0.88
+9005E55A0,Crimea Port Services,UN-SC,RU,0.84
+9005F66B0,Abkhazia Trade Partners,EU-AML,GE,0.71
+9005A77C0,Tartus Shipping Agency,FATF-BLACKLIST,SY,0.93
+9005B88D0,Erbil Fuel Distribution,OFAC-SDN,IQ,0.68
+9005C99E0,Aleppo Textile Mills,UN-SC,SY,0.87
+9006DAA10,Latakia Chemical Exports,EU-AML,SY,0.90
+9006EBB20,Raqqa Agricultural Co,FATF-BLACKLIST,SY,0.85
+9006FCC30,Homs Refinery Operations,OFAC-SDN,SY,0.92
+9006ADD40,Deir ez-Zor Gas Pipeline,UN-SC,SY,0.88
+9006BEE50,Idlib Olive Oil Traders,EU-AML,SY,0.63
+9007CFF60,Palmyra Heritage Tours LLC,FATF-BLACKLIST,SY,0.56
+9007DA070,Manbij Border Trading,OFAC-SDN,SY,0.79
+9007EB180,Qamishli Cross-Border Svcs,UN-SC,SY,0.74
+9007FC290,Hasaka Petroleum Corp,EU-AML,SY,0.81
+9007AD3A0,Daraa Commercial Hub,FATF-BLACKLIST,SY,0.77
+9008BE4B0,Suweida Basalt Mining,OFAC-SDN,SY,0.69
+9008CF5C0,As-Suwayda Stone Works,UN-SC,SY,0.72
+9008DA6D0,Quneitra Frontier Trading,EU-AML,SY,0.83
+9008EB7E0,Bosra Antiquities Export,FATF-BLACKLIST,SY,0.91
+9008FC8F0,Maaloula Craft Industries,OFAC-SDN,SY,0.58
+9009AD9A0,Sednaya Industrial Zone,UN-SC,SY,0.95
+9009BEAB0,Zabadani Transit Corp,EU-AML,SY,0.76
+9009CFBC0,Douma Chemical Storage,FATF-BLACKLIST,SY,0.97
+9009DACD0,Yarmouk Camp Services,OFAC-SDN,SY,0.84
+9009EBDE0,Ghouta Farm Products,UN-SC,SY,0.67
+900AFCEF0,Afrin Olive Cooperative,EU-AML,SY,0.71
+900BADF00,Azaz Border Logistics,FATF-BLACKLIST,TR,0.80
+900CBEA10,Jarabulus Crossing Services,OFAC-SDN,SY,0.86
+900DCFB20,Tal Abyad Grain Silos,UN-SC,SY,0.73
+900EDAC30,Ras al-Ayn Water Systems,EU-AML,SY,0.65
+900FEBD40,Kobani Reconstruction LLC,FATF-BLACKLIST,SY,0.59
+9010ACE50,Tabqa Dam Power Corp,OFAC-SDN,SY,0.88
+9010BDF60,Thawra Oil Fields Ltd,UN-SC,SY,0.91
+9010CEA70,Maskana Agricultural Co,EU-AML,SY,0.64
+9010DFB80,Sfireh Industrial Park,FATF-BLACKLIST,SY,0.78
+9010EAC90,Nubl Defense Industries,OFAC-SDN,SY,0.93
+9011FBDA0,Zahraa Security Services,UN-SC,SY,0.89
+9011ACEB0,Fu'ah Trade Consortium,EU-AML,SY,0.75
+9011BDFC0,Kefraya Agricultural Union,FATF-BLACKLIST,SY,0.70
+9011CEAD0,Saraqeb Transport Hub,OFAC-SDN,SY,0.82
+9011DFBE0,Maarat al-Numan Market,UN-SC,SY,0.68
+9012EACF0,Jisr al-Shughur Mills,EU-AML,SY,0.74
+9012FBDA0,Ariha Processing Plant,FATF-BLACKLIST,SY,0.85
+9012ACEB0,Kafr Nabl Media Corp,OFAC-SDN,SY,0.61
+9012BDFC0,Binnish Textile Factory,UN-SC,SY,0.79
+9012CEAD0,Taftanaz Airbase Svcs,EU-AML,SY,0.92
+9013DFBE0,Sinjar Mountain Refuge,FATF-BLACKLIST,IQ,0.87
+9013EACF0,Tal Afar Municipal Svcs,OFAC-SDN,IQ,0.76
+9013FBDA0,Baiji Refinery Operations,UN-SC,IQ,0.94
+9013ACEB0,Tikrit Construction Co,EU-AML,IQ,0.71
+9013BDFC0,Samarra Heritage Trust,FATF-BLACKLIST,IQ,0.66
+9013CEAD0,Fallujah Industrial Zone,OFAC-SDN,IQ,0.89
+9014DFBE0,Ramadi Bridge Builders,UN-SC,IQ,0.73
+9014EACF0,Hit Cement Works,EU-AML,IQ,0.68
+9014FBDA0,Haditha Dam Operations,FATF-BLACKLIST,IQ,0.82
+9014ACEB0,Al-Qaim Border Trading,OFAC-SDN,IQ,0.91
+9014BDFC0,Rawa River Transport,UN-SC,IQ,0.64
+9014CEAD0,Anah Fish Farming Co,EU-AML,IQ,0.57
+9015DFBE0,Kubaisa Gas Processing,FATF-BLACKLIST,IQ,0.79
+9015EACF0,Rutba Desert Logistics,OFAC-SDN,IQ,0.84
+9015FBDA0,Nukhayb Camel Trading,UN-SC,IQ,0.62
+9015ACEB0,Trebil Customs Agency,EU-AML,IQ,0.75
+9015BDFC0,Al-Waleed Free Zone,FATF-BLACKLIST,IQ,0.88
+9015CEAD0,Akashat Phosphate Mining,OFAC-SDN,IQ,0.71
+9016DFBE0,K3 Pipeline Services,UN-SC,IQ,0.83
+9016EACF0,T1 Pump Station LLC,EU-AML,IQ,0.69
+9016FBDA0,Mosul Trade Chamber,FATF-BLACKLIST,IQ,0.95
+9016ACEB0,Nineveh Plains Farming,OFAC-SDN,IQ,0.58
+9016BDFC0,Duhok Mountain Resort,UN-SC,IQ,0.45
+9016CEAD0,Zakho Border Exchange,EU-AML,IQ,0.77
+9017DFBE0,Ibrahim Khalil Customs,FATF-BLACKLIST,IQ,0.80
+9017EACF0,Mandali Transit Hub,OFAC-SDN,IQ,0.73
+9017FBDA0,Mundhiriyya Agri Co,UN-SC,IQ,0.66
+9017ACEB0,Baqubah Industrial Co,EU-AML,IQ,0.72
+9017BDFC0,Khanaqin Energy Corp,FATF-BLACKLIST,IQ,0.85
+9017CEAD0,Jalawla Trade Union,OFAC-SDN,IQ,0.68
+9018DFBE0,Tuz Khurmatu Gas Co,UN-SC,IQ,0.79
+9018EACF0,Kifri Mining Services,EU-AML,IQ,0.63
+9018FBDA0,Chamchamal Cement LLC,FATF-BLACKLIST,IQ,0.74
+9018ACEB0,Halabja Chemical Works,OFAC-SDN,IQ,0.97
+9018BDFC0,Penjwin Border Guards,UN-SC,IQ,0.81
+9018CEAD0,Qala Diza Hydro Power,EU-AML,IQ,0.56
+9019DFBE0,Ranya Tobacco Factory,FATF-BLACKLIST,IQ,0.70
+9019EACF0,Shaqlawa Mountain Tea,OFAC-SDN,IQ,0.49
+9019FBDA0,Barzan Highland Trading,UN-SC,IQ,0.87
+9019ACEB0,Amadiya Ancient Trades,EU-AML,IQ,0.62
+9019BDFC0,Akre Stone Quarries,FATF-BLACKLIST,IQ,0.75
+9019CEAD0,Sheikhan Olive Press,OFAC-SDN,IQ,0.58
+901ADFBE0,Lalish Temple Trust,UN-SC,IQ,0.53
+901AEACF0,Alqosh Heritage Fund,EU-AML,IQ,0.47
+901AFBDA0,Bashiqa Farming Union,FATF-BLACKLIST,IQ,0.71
+901AACEB0,Bartella Craft Guild,OFAC-SDN,IQ,0.64
+901ABDFC0,Qaraqosh Build Corp,UN-SC,IQ,0.78
+901ACEAD0,Hamdaniya Services LLC,EU-AML,IQ,0.69
+901BDFBE0,Ankawa Business Park,FATF-BLACKLIST,IQ,0.55
+901BEACF0,Ainkawa Trade Center,OFAC-SDN,IQ,0.82
+901BFBDA0,Minsk Tractor Works,UN-SC,BY,0.88
+901BACEB0,Grodno Tobacco Factory,EU-AML,BY,0.73
+901BBDFC0,Brest Fortress Trading,FATF-BLACKLIST,BY,0.80
+901BCEAD0,Gomel Chemical Plant,OFAC-SDN,BY,0.85
+901CDFBE0,Vitebsk Linen Mills,UN-SC,BY,0.68
+901CEACF0,Mogilev Steel Works,EU-AML,BY,0.76
+901CFBDA0,Bobruisk Tire Factory,FATF-BLACKLIST,BY,0.72
+901CACEB0,Baranovichi Aircraft,OFAC-SDN,BY,0.91
+901CBDFC0,Lida Castle Brewing,UN-SC,BY,0.54
+901CCEAD0,Novogrudok Forest Co,EU-AML,BY,0.63
+901DDFBE0,Polotsk Oil Refinery,FATF-BLACKLIST,BY,0.87
+901DEACF0,Orsha Linen Complex,OFAC-SDN,BY,0.70
+901DFBDA0,Zhlobin Steel Rolling,UN-SC,BY,0.83
+901DACEB0,Rechitsa Oil Drilling,EU-AML,BY,0.77
+901DBDFC0,Mozyr Refinery Corp,FATF-BLACKLIST,BY,0.92
+901DCEAD0,Pinsk Match Factory,OFAC-SDN,BY,0.59
+901EDFBE0,Slonim Paper Mills,UN-SC,BY,0.66
+901EEACF0,Volkovysk Cement Co,EU-AML,BY,0.74
+901EFBDA0,Grodno Azot Chemical,FATF-BLACKLIST,BY,0.89
+901EACEB0,Bereza Cartridge Plant,OFAC-SDN,BY,0.81
+901EBDFC0,Ivatsevichi Forestry,UN-SC,BY,0.57
+901ECEAD0,Luninets Marshland Co,EU-AML,BY,0.65
+901FDFBE0,Mikashevichi Granite,FATF-BLACKLIST,BY,0.78
+901FEACF0,Kalinkovichi Railway,OFAC-SDN,BY,0.72
+901FFBDA0,Svetlogorsk Chemical,UN-SC,BY,0.86
+901FACEB0,Dobrush Paper Factory,EU-AML,BY,0.69
+901FBDFC0,Rogachev Dairy Works,FATF-BLACKLIST,BY,0.61
+901FCEAD0,Chausy Hemp Factory,OFAC-SDN,BY,0.73
+9020DFBE0,Krichev Cement Plant,UN-SC,BY,0.80
+9020EACF0,Mstislavl Flax Mills,EU-AML,BY,0.56
+9020FBDA0,Klimovichi Glass Co,FATF-BLACKLIST,BY,0.68
+9020ACEB0,Bykhov Canning Works,OFAC-SDN,BY,0.75
+9020BDFC0,Shklov Paper Mill LLC,UN-SC,BY,0.63
+9020CEAD0,Krugloe Peat Energy,EU-AML,BY,0.71
+9021DFBE0,Osipovichi Railway Svcs,FATF-BLACKLIST,BY,0.84
+9021EACF0,Kirovsk Mining Corp,OFAC-SDN,BY,0.79
+9021FBDA0,Soligorsk Potash Mines,UN-SC,BY,0.93
+9021ACEB0,Starobin Salt Extraction,EU-AML,BY,0.86
+9021BDFC0,Slutsk Sugar Refinery,FATF-BLACKLIST,BY,0.67
+9021CEAD0,Kletsk Dairy Processing,OFAC-SDN,BY,0.60
+9022DFBE0,Nesvizh Agricultural,UN-SC,BY,0.72
+9022EACF0,Kopyl Livestock Trading,EU-AML,BY,0.55
+9022FBDA0,Stolbtsy Wood Products,FATF-BLACKLIST,BY,0.76
+9022ACEB0,Dzerzhinsk Optics Plant,OFAC-SDN,BY,0.88
+9022BDFC0,Fanipol Chemical Store,UN-SC,BY,0.64
+9022CEAD0,Zaslavl Rail Junction,EU-AML,BY,0.70
+9023DFBE0,Zhodino Truck Factory,FATF-BLACKLIST,BY,0.91
+9023EACF0,Smolevichi Agro Corp,OFAC-SDN,BY,0.58
+9023FBDA0,Borisov Match Factory,UN-SC,BY,0.75
+9023ACEB0,Logoisk Ski Resort LLC,EU-AML,BY,0.48
+9023BDFC0,Pleshchenitsy Forest,FATF-BLACKLIST,BY,0.82
+9023CEAD0,Krupki Flax Processing,OFAC-SDN,BY,0.67
+9024DFBE0,Berezino River Trade,UN-SC,BY,0.73
+9024EACF0,Cherven Apple Orchards,EU-AML,BY,0.52
+9024FBDA0,Pukhovichi Grain Depot,FATF-BLACKLIST,BY,0.79
+9024ACEB0,Marina Gorka Textiles,OFAC-SDN,BY,0.71
+9024BDFC0,Uzda Hemp Processing,UN-SC,BY,0.66
+9024CEAD0,Lyuban Sugar Beet Co,EU-AML,BY,0.74
