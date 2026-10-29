@@ -12,8 +12,47 @@ from pyspark.sql import SparkSession, DataFrame, functions as F
 from pyspark.sql.window import Window
 
 
+def _get_short_path(path: str) -> str:
+    """Returns 8.3 short path on Windows to avoid whitespace issues in worker spawn."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            buf = ctypes.create_unicode_buffer(260)
+            needed = ctypes.windll.kernel32.GetShortPathNameW(path, buf, 260)
+            if 0 < needed < 260:
+                return buf.value
+        except Exception:
+            pass
+    return path
+
+
+def _init_windows_hadoop() -> None:
+    """Configures HADOOP_HOME, PYTHONPATH, and PYSPARK_PYTHON for Windows environments."""
+    if os.name == "nt":
+        import sys
+        short_py = _get_short_path(sys.executable)
+        os.environ["PYSPARK_PYTHON"] = short_py
+        os.environ["PYSPARK_DRIVER_PYTHON"] = short_py
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, ".."))
+        short_root = _get_short_path(project_root)
+        os.environ["PYTHONPATH"] = (
+            short_root + os.pathsep + project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
+        )
+
+        if "HADOOP_HOME" not in os.environ:
+            local_hadoop = os.path.join(project_root, "hadoop")
+            if os.path.exists(os.path.join(local_hadoop, "bin", "winutils.exe")):
+                short_hadoop = _get_short_path(local_hadoop)
+                os.environ["HADOOP_HOME"] = short_hadoop
+                os.environ["PATH"] = os.path.join(short_hadoop, "bin") + os.pathsep + os.environ.get("PATH", "")
+
+
 def create_spark_session(app_name: str = "ChainReaction-FeatureEngineering") -> SparkSession:
     """Initializes or retrieves a local PySpark session with memory tuning."""
+    _init_windows_hadoop()
     spark = (
         SparkSession.builder.appName(app_name)
         .master("local[*]")
@@ -54,7 +93,14 @@ def compute_spark_account_features(
         df = df.limit(max_rows)
 
     # Standardize column types
-    df = df.withColumn("Timestamp", F.to_timestamp(F.col("Timestamp")))
+    df = df.withColumn(
+        "Timestamp",
+        F.coalesce(
+            F.to_timestamp(F.col("Timestamp"), "yyyy/MM/dd HH:mm"),
+            F.to_timestamp(F.col("Timestamp"), "yyyy-MM-dd HH:mm:ss"),
+            F.to_timestamp(F.col("Timestamp"))
+        )
+    )
     df = df.withColumn("amount_paid_usd", F.col("amount_paid_usd").cast("double"))
     df = df.withColumn("amount_received_usd", F.col("amount_received_usd").cast("double"))
     df = df.withColumn("Is Laundering", F.col("Is Laundering").cast("integer"))

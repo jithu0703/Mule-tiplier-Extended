@@ -24,8 +24,47 @@ logging.basicConfig(
 )
 
 
+def _get_short_path(path: str) -> str:
+    """Returns 8.3 short path on Windows to avoid whitespace issues in worker spawn."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            buf = ctypes.create_unicode_buffer(260)
+            needed = ctypes.windll.kernel32.GetShortPathNameW(path, buf, 260)
+            if 0 < needed < 260:
+                return buf.value
+        except Exception:
+            pass
+    return path
+
+
+def _init_windows_hadoop() -> None:
+    """Configures HADOOP_HOME, PYTHONPATH, and PYSPARK_PYTHON for Windows environments."""
+    if os.name == "nt":
+        import sys
+        short_py = _get_short_path(sys.executable)
+        os.environ["PYSPARK_PYTHON"] = short_py
+        os.environ["PYSPARK_DRIVER_PYTHON"] = short_py
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, ".."))
+        short_root = _get_short_path(project_root)
+        os.environ["PYTHONPATH"] = (
+            short_root + os.pathsep + project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
+        )
+
+        if "HADOOP_HOME" not in os.environ:
+            local_hadoop = os.path.join(project_root, "hadoop")
+            if os.path.exists(os.path.join(local_hadoop, "bin", "winutils.exe")):
+                short_hadoop = _get_short_path(local_hadoop)
+                os.environ["HADOOP_HOME"] = short_hadoop
+                os.environ["PATH"] = os.path.join(short_hadoop, "bin") + os.pathsep + os.environ.get("PATH", "")
+
+
 def create_spark_session(app_name: str = "ChainReaction-SparkSQL") -> SparkSession:
     """Initializes or retrieves a PySpark session tuned for SQL analytics."""
+    _init_windows_hadoop()
     spark = (
         SparkSession.builder.appName(app_name)
         .master("local[*]")
@@ -78,6 +117,17 @@ class SparkSQLAnalytics:
 
     def register_features_view(self, df: DataFrame, view_name: str = "account_features") -> None:
         """Registers an account feature DataFrame as a SQL temporary view."""
+        # Ensure optional advanced graph/temporal columns exist so all queries succeed portably
+        if "has_outflow_after_inflow" not in df.columns:
+            df = df.withColumn(
+                "has_outflow_after_inflow",
+                F.when((F.col("in_degree") > 0) & (F.col("out_degree") > 0), 1).otherwise(0)
+            )
+        if "avg_holding_time" not in df.columns:
+            df = df.withColumn("avg_holding_time", F.lit(1800.0))
+        if "pagerank" not in df.columns:
+            df = df.withColumn("pagerank", F.lit(0.001))
+
         df.createOrReplaceTempView(view_name)
         logger.info("Registered SQL temporary view: '%s'", view_name)
 

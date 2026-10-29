@@ -40,30 +40,98 @@ logging.basicConfig(
 )
 
 
+def _get_short_path(path: str) -> str:
+    """Returns 8.3 short path on Windows to avoid whitespace issues in worker spawn."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            buf = ctypes.create_unicode_buffer(260)
+            needed = ctypes.windll.kernel32.GetShortPathNameW(path, buf, 260)
+            if 0 < needed < 260:
+                return buf.value
+        except Exception:
+            pass
+    return path
+
+
+def _init_windows_hadoop() -> None:
+    """Configures HADOOP_HOME, PYTHONPATH, and PYSPARK_PYTHON for Windows environments."""
+    if os.name == "nt":
+        import sys
+        short_py = _get_short_path(sys.executable)
+        os.environ["PYSPARK_PYTHON"] = short_py
+        os.environ["PYSPARK_DRIVER_PYTHON"] = short_py
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, ".."))
+        short_root = _get_short_path(project_root)
+        os.environ["PYTHONPATH"] = (
+            short_root + os.pathsep + project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
+        )
+
+        if "HADOOP_HOME" not in os.environ:
+            local_hadoop = os.path.join(project_root, "hadoop")
+            if os.path.exists(os.path.join(local_hadoop, "bin", "winutils.exe")):
+                short_hadoop = _get_short_path(local_hadoop)
+                os.environ["HADOOP_HOME"] = short_hadoop
+                os.environ["PATH"] = os.path.join(short_hadoop, "bin") + os.pathsep + os.environ.get("PATH", "")
+
+
 def create_spark_session(app_name: str = "ChainReaction-WideColumn") -> SparkSession:
-    """Configures a Spark session equipped with Delta Lake capabilities."""
+    """Configures a Spark session equipped with Delta Lake capabilities when available."""
+    _init_windows_hadoop()
+    # Check if delta-spark or Databricks runtime is available
+    is_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
+    has_delta = False
+    try:
+        import delta  # noqa: F401
+        has_delta = True
+    except ImportError:
+        pass
+
     builder = (
         SparkSession.builder.appName(app_name)
         .master("local[*]")
         .config("spark.driver.memory", "4g")
         .config("spark.sql.shuffle.partitions", "8")
         .config("spark.ui.showConsoleProgress", "false")
-        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     )
+
+    if has_delta:
+        try:
+            from delta import configure_spark_with_delta_pip
+            builder = configure_spark_with_delta_pip(builder)
+        except Exception:
+            builder = (
+                builder.config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+                .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+            )
+    elif is_databricks:
+        # Databricks runtime natively configures Delta Lake
+        pass
+
+    spark = builder.getOrCreate()
+
+    # Validate catalog resolution; if DeltaCatalog was requested but class is missing, fallback cleanly
     try:
-        spark = builder.getOrCreate()
+        spark.catalog.currentDatabase()
     except Exception as exc:
-        # Fallback to standard session if Delta package jar is not on classpath in local test
-        logger.warning("Delta Lake extension not detected on classpath, running with standard Parquet fallback: %s", exc)
-        spark = (
-            SparkSession.builder.appName(app_name)
-            .master("local[*]")
-            .config("spark.driver.memory", "4g")
-            .config("spark.sql.shuffle.partitions", "8")
-            .config("spark.ui.showConsoleProgress", "false")
-            .getOrCreate()
-        )
+        if "DeltaCatalog" in str(exc) or "ClassNotFoundException" in str(exc):
+            logger.warning(
+                "Delta Lake catalog plugin not found on classpath (%s). Recreating session without Delta extensions...",
+                exc,
+            )
+            spark.stop()
+            spark = (
+                SparkSession.builder.appName(app_name)
+                .master("local[*]")
+                .config("spark.driver.memory", "4g")
+                .config("spark.sql.shuffle.partitions", "8")
+                .config("spark.ui.showConsoleProgress", "false")
+                .getOrCreate()
+            )
+
     spark.sparkContext.setLogLevel("WARN")
     return spark
 
@@ -93,11 +161,34 @@ class WideColumnStore:
         """Creates physical tables adhering to wide-column schema standards."""
         logger.info("Persisting Wide-Column tables...")
 
+        # Standardize column naming for transactions table
+        tx_cols = {c.lower().replace(" ", "_"): c for c in transactions_df.columns}
+        tx_std = transactions_df
+        for target_col, src_col in [
+            ("timestamp", tx_cols.get("timestamp")),
+            ("from_account", tx_cols.get("from_account")),
+            ("to_account", tx_cols.get("to_account")),
+            ("is_laundering", tx_cols.get("is_laundering")),
+            ("amount_paid_usd", tx_cols.get("amount_paid_usd", tx_cols.get("amount_paid"))),
+        ]:
+            if src_col and src_col != target_col and src_col in tx_std.columns:
+                tx_std = tx_std.withColumnRenamed(src_col, target_col)
+
+        # Standardize column naming for account features table
+        feat_cols = {c.lower().replace(" ", "_"): c for c in account_features_df.columns}
+        feat_std = account_features_df
+        for target_col, src_col in [
+            ("account", feat_cols.get("account")),
+            ("is_laundering", feat_cols.get("is_laundering", feat_cols.get("is_mule", feat_cols.get("label")))),
+        ]:
+            if src_col and src_col != target_col and src_col in feat_std.columns:
+                feat_std = feat_std.withColumnRenamed(src_col, target_col)
+
         # 1. TRANSACTION EVENTS TABLE
         # Cassandra mapping: partition key = account_id, clustering = timestamp DESC
         # Delta mapping: partitioned by txn_date with sorted timestamp
         tx_prepared = (
-            transactions_df
+            tx_std
             .withColumn("txn_date", F.to_date(F.col("timestamp")))
             .sort("timestamp", ascending=False)
         )
@@ -109,7 +200,7 @@ class WideColumnStore:
 
         # 2. ACCOUNT PROFILES (WIDE ROW PER ACCOUNT)
         # Cassandra mapping: 1 primary key (account_id) with 20+ feature columns
-        profiles_prepared = account_features_df.withColumn(
+        profiles_prepared = feat_std.withColumn(
             "last_updated", F.current_timestamp()
         )
 
@@ -154,9 +245,12 @@ class WideColumnStore:
                 .option("mergeSchema", "true") \
                 .save(self.account_profiles_path)
         else:
+            temp_path = self.account_profiles_path + "_evolve_tmp"
             evolved_df.write.format("parquet") \
                 .mode("overwrite") \
-                .save(self.account_profiles_path)
+                .save(temp_path)
+            shutil.rmtree(self.account_profiles_path, ignore_errors=True)
+            shutil.move(temp_path, self.account_profiles_path)
 
         # Refresh temp view
         evolved_profiles = self.spark.read.format(self.format).load(self.account_profiles_path)
@@ -201,7 +295,10 @@ class WideColumnStore:
         current = self.spark.read.format(self.format).load(self.account_profiles_path)
         untouched = current.join(updates_df.select("account"), on="account", how="left_anti")
         merged = untouched.unionByName(updates_df, allowMissingColumns=True)
-        merged.write.format(self.format).mode("overwrite").save(self.account_profiles_path)
+        temp_path = self.account_profiles_path + "_upsert_tmp"
+        merged.write.format(self.format).mode("overwrite").save(temp_path)
+        shutil.rmtree(self.account_profiles_path, ignore_errors=True)
+        shutil.move(temp_path, self.account_profiles_path)
 
     def demonstrate_time_travel(self) -> Optional[DataFrame]:
         """Queries historical versions of the account profile table.

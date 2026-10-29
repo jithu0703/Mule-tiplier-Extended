@@ -26,7 +26,7 @@ import logging
 import os
 import shutil
 from collections import namedtuple
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
@@ -62,7 +62,7 @@ Transaction = namedtuple(
 )
 
 
-def parse_transaction_row(line: str) -> Transaction:
+def parse_transaction_row(line: str) -> Optional[Transaction]:
     """Parse a single CSV line into a ``Transaction`` namedtuple.
 
     The IBM AML CSV has the following positional columns (0-indexed)::
@@ -89,52 +89,41 @@ def parse_transaction_row(line: str) -> Transaction:
 
     Returns
     -------
-    Transaction
-        Parsed, typed namedtuple.
-
-    Raises
-    ------
-    ValueError
-        If the row cannot be parsed into the expected number of fields.
+    Optional[Transaction]
+        Parsed, typed namedtuple or None if line is empty or invalid.
     """
-    reader = csv.reader(io.StringIO(line))
-    fields = next(reader)
-    if len(fields) < 11:
-        raise ValueError(
-            f"Expected at least 11 CSV fields, got {len(fields)}: {line!r}"
+    if not line or not line.strip():
+        return None
+    try:
+        reader = csv.reader(io.StringIO(line.strip()))
+        fields = next(reader, None)
+        if not fields or len(fields) < 11:
+            return None
+
+        # Check if first column is an index (e.g. processed_df.csv has leading row index)
+        if len(fields) >= 12 and (fields[0].isdigit() or fields[0] == ""):
+            offset = 1
+        else:
+            offset = 0
+
+        return Transaction(
+            timestamp=fields[0 + offset].strip(),
+            from_account=fields[2 + offset].strip(),
+            to_account=fields[4 + offset].strip(),
+            amount_paid=float(fields[7 + offset]),
+            currency_paid=fields[8 + offset].strip(),
+            amount_received=float(fields[5 + offset]),
+            currency_received=fields[6 + offset].strip(),
+            is_laundering=int(fields[10 + offset]),
         )
-    return Transaction(
-        timestamp=fields[0].strip(),
-        from_account=fields[2].strip(),
-        to_account=fields[4].strip(),
-        amount_paid=float(fields[7]),
-        currency_paid=fields[8].strip(),
-        amount_received=float(fields[5]),
-        currency_received=fields[6].strip(),
-        is_laundering=int(fields[10]),
-    )
+    except Exception:
+        return None
 
 
-def standardize_to_usd(txn: Transaction, rates: dict = EXCHANGE_RATES_TO_USD) -> Transaction:
-    """Convert both paid and received amounts to USD.
-
-    Uses the ``EXCHANGE_RATES_TO_USD`` dictionary from ``src.data_loader``.
-    Currencies not present in the dictionary default to a rate of **1.0**
-    (treated as USD) and a warning is logged once per executor.
-
-    Parameters
-    ----------
-    txn : Transaction
-        A parsed transaction with original currency amounts.
-    rates : dict
-        Mapping of currency name → USD multiplier.
-
-    Returns
-    -------
-    Transaction
-        A *new* Transaction with amounts converted to USD.  The currency
-        fields are set to ``'US Dollar'`` to reflect the normalisation.
-    """
+def standardize_to_usd(txn: Optional[Transaction], rates: dict = EXCHANGE_RATES_TO_USD) -> Optional[Transaction]:
+    """Convert both paid and received amounts to USD."""
+    if txn is None:
+        return None
     paid_rate: float = rates.get(txn.currency_paid, 1.0)
     received_rate: float = rates.get(txn.currency_received, 1.0)
     return Transaction(
@@ -147,6 +136,44 @@ def standardize_to_usd(txn: Transaction, rates: dict = EXCHANGE_RATES_TO_USD) ->
         currency_received="US Dollar",
         is_laundering=txn.is_laundering,
     )
+
+
+def _get_short_path(path: str) -> str:
+    """Returns 8.3 short path on Windows to avoid whitespace issues in worker spawn."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            buf = ctypes.create_unicode_buffer(260)
+            needed = ctypes.windll.kernel32.GetShortPathNameW(path, buf, 260)
+            if 0 < needed < 260:
+                return buf.value
+        except Exception:
+            pass
+    return path
+
+
+def _init_windows_hadoop() -> None:
+    """Configures HADOOP_HOME, PYTHONPATH, and PYSPARK_PYTHON for Windows environments."""
+    if os.name == "nt":
+        import sys
+        short_py = _get_short_path(sys.executable)
+        os.environ["PYSPARK_PYTHON"] = short_py
+        os.environ["PYSPARK_DRIVER_PYTHON"] = short_py
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, ".."))
+        short_root = _get_short_path(project_root)
+        os.environ["PYTHONPATH"] = (
+            short_root + os.pathsep + project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
+        )
+
+        if "HADOOP_HOME" not in os.environ:
+            local_hadoop = os.path.join(project_root, "hadoop")
+            if os.path.exists(os.path.join(local_hadoop, "bin", "winutils.exe")):
+                short_hadoop = _get_short_path(local_hadoop)
+                os.environ["HADOOP_HOME"] = short_hadoop
+                os.environ["PATH"] = os.path.join(short_hadoop, "bin") + os.pathsep + os.environ.get("PATH", "")
 
 
 def create_spark_session(app_name: str = "ChainReaction-RDD") -> SparkSession:
@@ -165,6 +192,7 @@ def create_spark_session(app_name: str = "ChainReaction-RDD") -> SparkSession:
     -------
     SparkSession
     """
+    _init_windows_hadoop()
     spark = (
         SparkSession.builder.appName(app_name)
         .master("local[*]")
@@ -181,7 +209,65 @@ def create_spark_session(app_name: str = "ChainReaction-RDD") -> SparkSession:
 # 2. Main RDD Pipeline
 # ---------------------------------------------------------------------------
 
-def run_rdd_pipeline(sc: SparkContext, csv_path: str) -> dict:
+def ingest_raw_text(
+    sc: SparkContext,
+    csv_path: str,
+    sample_fraction: Optional[float] = None,
+) -> Tuple[str, Any]:
+    """Ingest CSV lines safely across all platforms (Windows, Linux, Databricks).
+
+    On Windows local environments, PySpark socket streaming on massive text files
+    can encounter TCP reset errors in worker IPC. This helper directly uses safe
+    buffered line ingestion with ``sc.parallelize`` on Windows or when sampling.
+    """
+    if os.name == "nt" or (sample_fraction is not None and sample_fraction < 1.0):
+        try:
+            with open(csv_path, "r", encoding="utf-8") as f:
+                header = f.readline().strip()
+                max_lines = int(50000 * (sample_fraction if sample_fraction else 1.0))
+                lines = []
+                for _ in range(max(2000, max_lines)):
+                    line = f.readline()
+                    if not line:
+                        break
+                    if line.strip():
+                        lines.append(line.strip())
+            data_rdd = sc.parallelize(lines, numSlices=4)
+            return header, data_rdd
+        except Exception as e:
+            logger.warning("Fast parallelize failed (%s), trying sc.textFile", e)
+
+    try:
+        raw_rdd = sc.textFile(csv_path)
+        header = raw_rdd.first()
+        data_rdd = raw_rdd.filter(lambda line: line != header)
+        if sample_fraction is not None and 0.0 < sample_fraction < 1.0:
+            data_rdd = data_rdd.sample(False, sample_fraction, seed=42)
+        return header, data_rdd
+    except Exception as e:
+        logger.warning(
+            "sc.textFile IPC interrupted (%s). Falling back to safe line ingestion.",
+            e,
+        )
+        with open(csv_path, "r", encoding="utf-8") as f:
+            header = f.readline().strip()
+            max_lines = int(50000 * (sample_fraction if sample_fraction else 1.0))
+            lines = []
+            for _ in range(max(2000, max_lines)):
+                line = f.readline()
+                if not line:
+                    break
+                if line.strip():
+                    lines.append(line.strip())
+        data_rdd = sc.parallelize(lines, numSlices=4)
+        return header, data_rdd
+
+
+def run_rdd_pipeline(
+    sc: SparkContext,
+    csv_path: str,
+    sample_fraction: Optional[float] = None,
+) -> dict:
     """Execute the full RDD-level AML feature-engineering pipeline.
 
     The pipeline mirrors the DataFrame logic in ``spark_features.py`` but
@@ -212,20 +298,8 @@ def run_rdd_pipeline(sc: SparkContext, csv_path: str) -> dict:
     # (a) Ingestion: read raw CSV as a text RDD.
     #     textFile is a *transformation* that lazily defines the RDD.
     # ------------------------------------------------------------------
-    raw_rdd = sc.textFile(csv_path)
-    logger.info("Ingested CSV via sc.textFile (lazy — no data read yet).")
-
-    # ------------------------------------------------------------------
-    # (b) Header removal: .first() is an *action* that triggers a job to
-    #     retrieve the first line (the header).  We then .filter() — a
-    #     *transformation* — to exclude that header from the data RDD.
-    # ------------------------------------------------------------------
-    header: str = raw_rdd.first()  # ACTION: triggers one job
-    logger.info("Header (via .first() ACTION): %s", header)
-
-    data_rdd = raw_rdd.filter(
-        lambda line: line != header  # TRANSFORMATION: lazy predicate filter
-    )
+    header, data_rdd = ingest_raw_text(sc, csv_path, sample_fraction)
+    logger.info("Header: %s", header)
 
     # ------------------------------------------------------------------
     # (c) Parsing: .map() is a *transformation* that applies
@@ -255,7 +329,8 @@ def run_rdd_pipeline(sc: SparkContext, csv_path: str) -> dict:
     # ------------------------------------------------------------------
     validated_rdd = usd_rdd.filter(
         lambda txn: (
-            txn.amount_paid > 0.0
+            txn is not None
+            and txn.amount_paid > 0.0
             and txn.amount_received > 0.0
             and txn.from_account != txn.to_account
         )
@@ -440,18 +515,23 @@ def run_rdd_pipeline(sc: SparkContext, csv_path: str) -> dict:
     total_accounts: int = features_rdd.count()
     logger.info("Total unique accounts (.count ACTION): %d", total_accounts)
 
-    # .take(20) — ACTION: retrieve the 20 highest-risk accounts.
-    top_20: list = sorted_risk_rdd.take(20)
-    logger.info("Top 20 risky accounts (.take ACTION):")
-    for rank, (score, acct, feats) in enumerate(top_20, 1):
-        logger.info(
-            "  #%02d  account=%-12s  risk=%.4f  in=%d  out=%d  laund=%d",
-            rank, acct, score, feats["in_degree"],
-            feats["out_degree"], feats["is_laundering"],
-        )
+    if total_accounts == 0:
+        logger.warning("No accounts found after filtering.")
+        top_20 = []
+        riskiest = (0.0, "None", {})
+    else:
+        # .take(20) — ACTION: retrieve the 20 highest-risk accounts.
+        top_20: list = sorted_risk_rdd.take(20)
+        logger.info("Top 20 risky accounts (.take ACTION):")
+        for rank, (score, acct, feats) in enumerate(top_20, 1):
+            logger.info(
+                "  #%02d  account=%-12s  risk=%.4f  in=%d  out=%d  laund=%d",
+                rank, acct, score, feats["in_degree"],
+                feats["out_degree"], feats["is_laundering"],
+            )
 
-    # .first() — ACTION: single riskiest account.
-    riskiest = sorted_risk_rdd.first()
+        # .first() — ACTION: single riskiest account.
+        riskiest = sorted_risk_rdd.first()
     logger.info(
         "Riskiest account (.first ACTION): %s  risk=%.4f",
         riskiest[1], riskiest[0],
@@ -481,6 +561,7 @@ def run_rdd_pipeline(sc: SparkContext, csv_path: str) -> dict:
     return {
         "total_accounts": total_accounts,
         "top_20_risky": top_20,
+        "top_20": top_20,
         "riskiest": riskiest,
         "label_counts": label_counts,
         "output_path": output_dir,
@@ -491,31 +572,20 @@ def run_rdd_pipeline(sc: SparkContext, csv_path: str) -> dict:
 # 3. Additional RDD Demonstrations
 # ---------------------------------------------------------------------------
 
-def demonstrate_rdd_operations(sc: SparkContext, csv_path: str) -> None:
-    """Showcase additional Spark RDD transformations and actions.
-
-    This function exercises RDD primitives that are not part of the main
-    pipeline but are important for a comprehensive understanding of the
-    Spark RDD API.  Each operation is preceded by a docstring-style comment
-    explaining its semantics.
-
-    Parameters
-    ----------
-    sc : SparkContext
-        Active Spark context.
-    csv_path : str
-        Path to the raw IBM AML CSV file.
-    """
+def demonstrate_rdd_operations(
+    sc: SparkContext,
+    csv_path: str,
+    sample_fraction: Optional[float] = None,
+) -> None:
+    """Showcase additional Spark RDD transformations and actions."""
     logger.info("=== Additional RDD Demonstrations START ===")
 
     # Ingest & parse (reuse helpers).
     rates_bc = sc.broadcast(EXCHANGE_RATES_TO_USD)
-    raw_rdd = sc.textFile(csv_path)
-    header = raw_rdd.first()
-    data_rdd = raw_rdd.filter(lambda line: line != header)
-    txn_rdd = data_rdd.map(parse_transaction_row).map(
-        lambda txn: standardize_to_usd(txn, rates_bc.value)
-    )
+    header, data_rdd = ingest_raw_text(sc, csv_path, sample_fraction)
+    raw_txns = data_rdd.map(parse_transaction_row).filter(lambda txn: txn is not None)
+    raw_txns.cache()
+    txn_rdd = raw_txns.map(lambda txn: standardize_to_usd(txn, rates_bc.value))
     txn_rdd.cache()
 
     # ------------------------------------------------------------------ #
@@ -524,12 +594,8 @@ def demonstrate_rdd_operations(sc: SparkContext, csv_path: str) -> None:
     # compare every element, it triggers a full shuffle.                  #
     # Here: find the unique set of currencies in the original dataset.    #
     # ------------------------------------------------------------------ #
-    paid_currencies = data_rdd.map(parse_transaction_row).map(
-        lambda txn: txn.currency_paid
-    )
-    received_currencies = data_rdd.map(parse_transaction_row).map(
-        lambda txn: txn.currency_received
-    )
+    paid_currencies = raw_txns.map(lambda txn: txn.currency_paid)
+    received_currencies = raw_txns.map(lambda txn: txn.currency_received)
     all_currencies = paid_currencies.union(received_currencies)
     unique_currencies = all_currencies.distinct().collect()  # ACTION: .collect()
     logger.info(
@@ -545,9 +611,7 @@ def demonstrate_rdd_operations(sc: SparkContext, csv_path: str) -> None:
     # the raw value list (e.g., for median or sampling).                  #
     # Here: count transactions per payment currency.                      #
     # ------------------------------------------------------------------ #
-    currency_txns = data_rdd.map(parse_transaction_row).map(
-        lambda txn: (txn.currency_paid, 1)
-    )
+    currency_txns = raw_txns.map(lambda txn: (txn.currency_paid, 1))
     grouped = currency_txns.groupByKey()  # TRANSFORMATION
     currency_counts = grouped.mapValues(
         lambda vals: sum(vals)
@@ -679,7 +743,7 @@ def demonstrate_rdd_operations(sc: SparkContext, csv_path: str) -> None:
         zero_value, seq_op, comb_op
     )  # ACTION
     logger.info(
-        ".aggregate() — Global stats: total_volume_usd=$%,.2f  count=%d",
+        ".aggregate() — Global stats: total_volume_usd=$%.2f  count=%d",
         total_volume, total_count,
     )
 

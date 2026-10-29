@@ -41,8 +41,47 @@ logging.basicConfig(
 )
 
 
+def _get_short_path(path: str) -> str:
+    """Returns 8.3 short path on Windows to avoid whitespace issues in worker spawn."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            buf = ctypes.create_unicode_buffer(260)
+            needed = ctypes.windll.kernel32.GetShortPathNameW(path, buf, 260)
+            if 0 < needed < 260:
+                return buf.value
+        except Exception:
+            pass
+    return path
+
+
+def _init_windows_hadoop() -> None:
+    """Configures HADOOP_HOME, PYTHONPATH, and PYSPARK_PYTHON for Windows environments."""
+    if os.name == "nt":
+        import sys
+        short_py = _get_short_path(sys.executable)
+        os.environ["PYSPARK_PYTHON"] = short_py
+        os.environ["PYSPARK_DRIVER_PYTHON"] = short_py
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, ".."))
+        short_root = _get_short_path(project_root)
+        os.environ["PYTHONPATH"] = (
+            short_root + os.pathsep + project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
+        )
+
+        if "HADOOP_HOME" not in os.environ:
+            local_hadoop = os.path.join(project_root, "hadoop")
+            if os.path.exists(os.path.join(local_hadoop, "bin", "winutils.exe")):
+                short_hadoop = _get_short_path(local_hadoop)
+                os.environ["HADOOP_HOME"] = short_hadoop
+                os.environ["PATH"] = os.path.join(short_hadoop, "bin") + os.pathsep + os.environ.get("PATH", "")
+
+
 def create_spark_session(app_name: str = "ChainReaction-ETL") -> SparkSession:
     """Initializes or retrieves a PySpark session tuned for ETL processing."""
+    _init_windows_hadoop()
     spark = (
         SparkSession.builder.appName(app_name)
         .master("local[*]")
@@ -68,13 +107,23 @@ class SchemaMapper:
         """Standardizes raw or pre-processed transaction column schemas."""
         columns = df.columns
 
-        # Case 1: Raw Kaggle format (Account, Account.1, Amount Paid, etc.)
-        if "Account" in columns and "Account.1" in columns:
+        # Standardize sender and receiver account columns across all raw/processed schemas
+        if "from_account" in columns and "to_account" in columns:
+            pass
+        elif "Account2" in columns and "Account4" in columns:
+            df = df.withColumnRenamed("Account2", "from_account")
+            df = df.withColumnRenamed("Account4", "to_account")
+        elif "Account" in columns and "Account.1" in columns:
             df = df.withColumnRenamed("Account", "from_account")
             df = df.withColumnRenamed("Account.1", "to_account")
         elif "from_Account" in columns and "to_Account" in columns:
             df = df.withColumnRenamed("from_Account", "from_account")
             df = df.withColumnRenamed("to_Account", "to_account")
+        elif "From Bank" in columns and "To Bank" in columns:
+            from_idx = columns.index("From Bank") + 1
+            to_idx = columns.index("To Bank") + 1
+            df = df.withColumnRenamed(columns[from_idx], "from_account")
+            df = df.withColumnRenamed(columns[to_idx], "to_account")
 
         if "Amount Paid" in columns:
             df = df.withColumnRenamed("Amount Paid", "amount_paid")
@@ -97,7 +146,14 @@ class SchemaMapper:
             )
 
         # Cast types
-        df = df.withColumn("timestamp", F.to_timestamp(F.col("Timestamp")))
+        df = df.withColumn(
+            "timestamp",
+            F.coalesce(
+                F.to_timestamp(F.col("Timestamp"), "yyyy/MM/dd HH:mm"),
+                F.to_timestamp(F.col("Timestamp"), "yyyy-MM-dd HH:mm:ss"),
+                F.to_timestamp(F.col("Timestamp"))
+            )
+        )
         if "Timestamp" in df.columns and "timestamp" != "Timestamp":
             df = df.drop("Timestamp")
 

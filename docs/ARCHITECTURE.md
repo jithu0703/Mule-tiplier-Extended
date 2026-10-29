@@ -77,7 +77,7 @@ flowchart TD
 
     style Sources fill:#dbeafe,stroke:#3b82f6
     style Storage fill:#d1fae5,stroke:#10b981
-    style ML fill:#ede9fe,stroke:#8b5cf6
+    style ML fill:#ede9fe,stroke:#000000
     style Streaming fill:#fce7f3,stroke:#ec4899
     style Serving fill:#fef3c7,stroke:#f59e0b
 ```
@@ -549,7 +549,12 @@ chain-reaction/
 │   ├── ARCHITECTURE.md              # This document
 │   ├── MILESTONES.md                # 6-milestone project roadmap
 │   ├── DESIGN.md                    # UI design system specification
+│   ├── DATABASE_SHOWCASE_GUIDE.md   # Executive presentation & showcase cheat sheet
 │   └── cassandra_schema.cql         # Production Cassandra CQL schema
+│
+├── scripts/                         # Interactive CLI utilities
+│   ├── showcase_db.py               # Interactive database presentation tour
+│   └── run_single_notebook.py       # Headless notebook execution runner
 │
 ├── src/                             # Core source modules
 │   ├── data_loader.py               # CSV ingestion, 15-currency USD standardization
@@ -572,7 +577,8 @@ chain-reaction/
 │
 ├── notebooks/                       # Jupyter/Databricks notebooks
 │   ├── 01–05 (Milestones 1–5)       # Original project notebooks
-│   └── 06a–06g (Milestone 6)        # Big data enhancement suite
+│   ├── 06a–06g (Milestone 6)        # Big data enhancement suite
+│   └── 07_database_showcase.ipynb   # Interactive DB architecture & query showcase
 │
 ├── outputs/                         # Generated artifacts (git-ignored)
 │   ├── cache/graph.pkl              # Serialized NetworkX DiGraph
@@ -591,3 +597,4 @@ chain-reaction/
 ├── requirements.txt                 # Python dependencies
 └── README.md                        # Project overview & quick start
 ```
+

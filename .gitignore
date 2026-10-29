@@ -14,3 +14,7 @@ test.ipynb
 test.py
 .agents/
 .impeccable/
+notebooks/data/stream
+notebooks/outputs
+hadoop
+__pycache__
